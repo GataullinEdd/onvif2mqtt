@@ -42,6 +42,17 @@ export default class SubscriberGroup {
     }));
   };
 
+  removeSubscribers = (predicate) => {
+    const targets = this.subscribers.filter(predicate);
+    targets.forEach((subscriber) => {
+      subscriber.unsubscribe();
+    });
+
+    this.subscribers = this.subscribers.filter((subscriber) => {
+      return !targets.includes(subscriber);
+    });
+  };
+
   onSubscriberEvent = (subscriberName, event) => {
     const [namespace, eventType] = event.topic._.split(NAMESPACE_DELIMITER);
     
@@ -49,7 +60,6 @@ export default class SubscriberGroup {
     const eventValue = event.message.message.data.simpleItem.$.Value;
 
     this.logger.trace('ONVIF received', { subscriberName, eventType, eventValue });
-
     this.callbacks[callbackType](subscriberName, eventValue);
   };
 }

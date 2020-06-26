@@ -35,8 +35,7 @@ const configSchema = new Schema({
     password: String,
   },
   onvif: {
-    type: Array,
-    required: true,
+    type: String,
     each: {
       name: {
         required: true,
@@ -50,6 +49,9 @@ const configSchema = new Schema({
       username: String,
       password: String,
     }
+  },
+  onvifDevicesJson: {
+    type: String
   }
 });
 
@@ -62,7 +64,7 @@ class Validator {
     return configSchema.validate(
       config
     );
-  };
+  }
 }
 
 export default new Validator();

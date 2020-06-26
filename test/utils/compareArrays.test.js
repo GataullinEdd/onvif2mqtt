@@ -27,4 +27,47 @@ describe('compareArrays', function () {
 
         assert.deepEqual(result, expected);
     });
+
+    it('life example', function () {
+        const array1 = [{
+            "hostname": "10.76.151.229",
+            "name": "hikvision_3_1001",
+            "password": "flussonic2019",
+            "port": 80,
+            "username": "admin" 
+        },{
+            "hostname": "10.76.151.72",
+            "name": "hiwatch_3_1001",
+            "password": "flussonic2019",
+            "port": 80,
+            "username": "admin"
+        }];
+        const array2 = [{
+            "hostname": "10.76.151.229",
+            "name": "hikvision_3_1001",
+            "password": "flussonic2019",
+            "port": 80,
+            "username": "admin" 
+        },{
+            "hostname": "10.76.151.72",
+            "name": "hiwatch_3_1001",
+            "password": "flussonic2019",
+            "port": 8080,
+            "username": "admin"
+        }];
+        const result = comparator(array1, array2, 'name');
+        const expected = {
+            updated: [{
+                "hostname": "10.76.151.72",
+                "name": "hiwatch_3_1001",
+                "password": "flussonic2019",
+                "port": 8080,
+                "username": "admin"
+            }],
+            removed: [],
+            added: []
+        }
+
+        assert.deepEqual(result, expected);
+    });
 });
