@@ -92,7 +92,7 @@ export default class Manager {
     });
   }
 
-  publishTemplates = (onvifDeviceId, eventType, eventState) => {
+  publishTemplates = (onvifDeviceId, eventType, eventState, timestamp) => {
     const templates = config.get('api.templates');
 
     if (!templates) {
@@ -105,9 +105,9 @@ export default class Manager {
       const interpolationValues = {
         onvifDeviceId,
         eventType,
-        eventState
+        eventState, 
+        timestamp
       };
-
       const interpolatedSubtopic = interpolateTemplateValues(subtopic, interpolationValues);
       const interpolatedTemplate = interpolateTemplateValues(template, interpolationValues);
 
@@ -116,10 +116,9 @@ export default class Manager {
   };
 
   /* Event Callbacks */
-  onMotionDetected = (onvifDeviceId, boolMotionState) => {
+  onMotionDetected = (onvifDeviceId, boolMotionState, timestamp) => {
     const topicKey = 'motion';
-
-    this.publishTemplates(onvifDeviceId, topicKey, boolMotionState);
+    this.publishTemplates(onvifDeviceId, topicKey, boolMotionState, timestamp);
     this.publisher.publish(onvifDeviceId, topicKey, convertBooleanToSensorState(boolMotionState));
   };
 

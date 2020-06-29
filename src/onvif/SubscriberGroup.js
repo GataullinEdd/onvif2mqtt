@@ -55,11 +55,12 @@ export default class SubscriberGroup {
 
   onSubscriberEvent = (subscriberName, event) => {
     const [namespace, eventType] = event.topic._.split(NAMESPACE_DELIMITER);
-    
     const callbackType = EVENTS[eventType];
+    const utcTime = event.message.message.$.UtcTime;
+    const timestamp = utcTime.getTime();
     const eventValue = event.message.message.data.simpleItem.$.Value;
 
     this.logger.trace('ONVIF received', { subscriberName, eventType, eventValue });
-    this.callbacks[callbackType](subscriberName, eventValue);
+    this.callbacks[callbackType](subscriberName, eventValue, timestamp);
   };
 }
