@@ -29,7 +29,7 @@ export default class Manager {
 
     this.publisher = new MqttPublisher(config.get('mqtt'));
     await this.publisher.connect();
-    this.subscriber = new OnvifSubscriberGroup();
+    this.subscriber = new OnvifSubscriberGroup([], this.onError);
 
     // TODO нет валидации конфига
     const configPath = config.get('onvifDevicesJson');
@@ -114,7 +114,7 @@ export default class Manager {
       this.publisher.publish(onvifDeviceId, interpolatedSubtopic, interpolatedTemplate, retain);
     });
   };
-
+  
   /* Event Callbacks */
   onMotionDetected = (onvifDeviceId, boolMotionState, timestamp) => {
     const topicKey = 'motion';
@@ -122,6 +122,10 @@ export default class Manager {
     this.publisher.publish(onvifDeviceId, topicKey, convertBooleanToSensorState(boolMotionState));
   };
 
+  onError = (onvifDeviceId) => {
+    this.publish(onvifDeviceId, 'disconnected');
+  };
+  
   publish = (onvifDeviceId, topicKey) => {
     this.publishTemplates(onvifDeviceId, topicKey);
     this.publisher.publish(onvifDeviceId, topicKey);

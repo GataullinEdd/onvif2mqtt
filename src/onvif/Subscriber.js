@@ -30,17 +30,17 @@ export default class OnvifSubscriber {
   }
 
   onCameraEvent = camMessage => {
-    this.onEvent(this.name, camMessage);
+    this.onEvent(this.name, null, camMessage);
   };
 
   onSubscribe = (err) => {
     if (err) {
       this.logger.error(`Failed to connect to ${this.name}`, err);
+      this.onEvent(this.name, err);
+    } else {
+      this.logger.info(`Successfully connected.`);
+      this.cam.on('event', this.onCameraEvent); 
     }
-
-    this.logger.info(`Successfully connected.`);
-
-    this.cam.on('event', this.onCameraEvent);
   };
 
   unsubscribe = () => {

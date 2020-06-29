@@ -1,12 +1,12 @@
 [{
     "hostname": "10.76.151.229",
-    "name": "hikvision_3_1001-1",
+    "name": "hikvision_3_1001",
     "password": "flussonic2019",
     "port": 80,
     "username": "admin" 
 },{
     "hostname": "10.76.151.229",
-    "name": "hikvision_3_1001-2",
+    "name": "hikvision_3_1002",
     "password": "flussonic2019",
     "port": 80,
     "username": "admin" 
