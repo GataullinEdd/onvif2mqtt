@@ -23,7 +23,6 @@ export default class Manager {
     await this.publisher.connect();
     this.subscriber = new OnvifSubscriberGroup([], this.onError);
 
-    // TODO нет валидации конфига
     const configPath = config.get('onvifDevicesJson');
     let devices = []
     if (configPath) {
@@ -36,7 +35,6 @@ export default class Manager {
   };
 
   onConfigUpdated = diff => {
-    console.log(diff)
     this.finalizeOnvifDevices(diff.removed);
     this.initializeOnvifDevices(diff.added);
     this.updateOnvifDevice(diff.updated);
