@@ -1,23 +1,15 @@
 import config from './Config';
-import validator from './ConfigValidator';
 import logger from './Logger';
 import OnvifSubscriberGroup from './onvif/SubscriberGroup';
 import MqttPublisher from './mqtt/Publisher';
-
-import fs from 'fs';
-import path from 'path';
-import util from 'util';
 import { CALLBACK_TYPES } from "./onvif/SubscriberGroup";
 import debounceStateUpdate from "./utils/debounceStateUpdate";
 import interpolateTemplateValues from './utils/interpolateTemplateValues';
-import compareArrays from './utils/compareArrays';
+import OnvifDevicesStore from './OnvifDevidesStore';
 
 const convertBooleanToSensorState = bool => bool ? 'ON' : 'OFF';
 
-const readFile = util.promisify(fs.readFile);
-
 export default class Manager {
-  devices = [];
   constructor() {
     this.logger = logger.child({ name: 'Manager' });
     
@@ -33,32 +25,21 @@ export default class Manager {
 
     // TODO нет валидации конфига
     const configPath = config.get('onvifDevicesJson');
+    let devices = []
     if (configPath) {
-      this.devices = await this.readOnvifConfig(configPath);
-      this.initializeOnvifDevices(this.devices);
-      this.runOnvifDevicesWatcher(configPath);
+      devices = await OnvifDevicesStore.init(configPath, this.onConfigUpdated)
     } else {
-      this.initializeOnvifDevices(config.get('onvif'));
+      devices = config.get('onvif');
     }
+    this.initializeOnvifDevices(devices);
     this.subscriber.withCallback(CALLBACK_TYPES.motion, this.onMotionDetected); 
   };
 
-  readOnvifConfig = async (configPath) => {
-    const json = await readFile(path.resolve(configPath), 'utf8');
-    return JSON.parse(json);
-  };
-
-  runOnvifDevicesWatcher = targetFile => {
-    this.logger.info('Onvif devices config is watching....');
-    fs.watchFile(targetFile, async () => {
-      this.logger.info('Onvif devices config changed');
-      const newConfig = await this.readOnvifConfig(targetFile);
-      const diff = compareArrays(this.devices, newConfig, 'name');
-      this.devices = newConfig;
-      this.finalizeOnvifDevices(diff.removed);
-      this.initializeOnvifDevices(diff.added);
-      this.updateOnvifDevice(diff.updated);
-    });
+  onConfigUpdated = diff => {
+    console.log(diff)
+    this.finalizeOnvifDevices(diff.removed);
+    this.initializeOnvifDevices(diff.added);
+    this.updateOnvifDevice(diff.updated);
   };
 
   initializeOnvifDevices = devices => {
