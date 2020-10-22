@@ -12,8 +12,8 @@ export default class MqttPublisher {
   constructor(userOptions) {
     this.options = { ...DEFAULT_OPTIONS, ...userOptions };
 
-    const { host, port } = this.options;
-    this.logger = logger.child({ name: 'MQTT', hostname: `${host}:${port}` });
+    const { host, port, clientId } = this.options;
+    this.logger = logger.child({ name: 'MQTT', hostname: `${host}:${port} as ${clientId}` });
   }
 
   connect = async () => {
@@ -25,13 +25,15 @@ export default class MqttPublisher {
   };
 
   publish = async (onvifId, event, value, retain = true) => {
-    const topic = `onvif2mqtt/${onvifId}/${event}`;
+    if (onvifId) {
+      const topic = `onvif2mqtt/${onvifId}/${event}`;
 
-    try {
-      this.logger.debug('Publishing.', { topic, value, retain });
-      await this.client.publish(`onvif2mqtt/${onvifId}/${event}`, value, { retain });
-    } catch (e) {
-      this.logger.error('Failed to publish', { error: e, topic, value, retain });
+      try {
+        this.logger.debug('Publishing.', { topic, value, retain });
+        await this.client.publish(`onvif2mqtt/${onvifId}/${event}`, value, { retain });
+      } catch (e) {
+        this.logger.error('Failed to publish', { error: e, topic, value, retain });
+      }
     }
   };
 }

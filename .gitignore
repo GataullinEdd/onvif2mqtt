@@ -1,3 +1,5 @@
 dist
 node_modules
 config.dev.yml
+config.yml
+config/devices.json
