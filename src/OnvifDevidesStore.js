@@ -13,12 +13,16 @@ let devices;
 
 const schema = new Schema({
     name: {
+      type: String,
       required: true,
     },
     hostname: {
+      type: String,
       required: true,
+      match: /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
     },
     port: {
+      type: Number, 
       required: true,
     },
     username: String,
@@ -48,8 +52,9 @@ export default class OnvifDevidesStore {
         try {
             const json = await readFile(path.resolve(configPath), 'utf8');
             const config = JSON.parse(json);
-            config.forEach(OnvifDevidesStore._validate);
-            return config;
+            const validConfig = config.filter(OnvifDevidesStore._validate);
+
+            return validConfig;
         } catch (e) {
             logger.error(`Error while reading config file ${configPath}`, e);
             logger.error(e);
@@ -67,6 +72,9 @@ export default class OnvifDevidesStore {
             errors.forEach(({ path, message }) => {
               logger.error(message, { path });
             });
+            return undefined;
         }
+
+        return config;
     }
 }

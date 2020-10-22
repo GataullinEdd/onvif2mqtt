@@ -106,8 +106,10 @@ export default class Manager {
   };
   
   publish = (onvifDeviceId, topicKey) => {
-    this.publishTemplates(onvifDeviceId, topicKey);
-    this.publisher.publish(onvifDeviceId, topicKey);
+    this.publishTemplates(onvifDeviceId, topicKey, '', Date.now());
+
+    // пока убрал. Не понятно зачем, если строка выше тоже публикует событие по шаблону
+    //this.publisher.publish(onvifDeviceId, topicKey, true, Date.now() );
   };
 
   // TODO подумать над тем, чтобы массово отправлять сообщения для всех добавленных, удаленных, обновленных камерах
