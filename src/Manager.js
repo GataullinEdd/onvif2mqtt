@@ -6,6 +6,7 @@ import { CALLBACK_TYPES } from "./onvif/SubscriberGroup";
 import debounceStateUpdate from "./utils/debounceStateUpdate";
 import interpolateTemplateValues from './utils/interpolateTemplateValues';
 import OnvifDevicesStore from './OnvifDevidesStore';
+import Ping from './Ping';
 
 const convertBooleanToSensorState = bool => bool ? 'ON' : 'OFF';
 
@@ -22,6 +23,8 @@ export default class Manager {
     this.publisher = new MqttPublisher(config.get('mqtt'));
     await this.publisher.connect();
     this.subscriber = new OnvifSubscriberGroup([], this.onError);
+
+    this.ping = new Ping(this);
 
     const configPath = config.get('onvifDevicesJson');
     let devices = []
@@ -44,6 +47,7 @@ export default class Manager {
     devices.forEach(async (onvifDevice) => {
       const { name } = onvifDevice;
       await this.subscriber.addSubscriber(onvifDevice);
+      this.ping.add(onvifDevice);
       this.onAdded(name);
     });
   };
@@ -56,6 +60,7 @@ export default class Manager {
         return deviceName === name;
       });
       await this.subscriber.addSubscriber(onvifDevice);
+      this.ping.update(onvifDevice);
       this.onUpdate(deviceName);
     });
   }
@@ -67,6 +72,7 @@ export default class Manager {
       this.subscriber.removeSubscribers(({name}) => {
         return deviceName === name;
       });
+      this.ping.remove(onvifDevice);
       this.onRemoved(deviceName);
     });
   }
@@ -101,12 +107,17 @@ export default class Manager {
     this.publisher.publish(onvifDeviceId, topicKey, convertBooleanToSensorState(boolMotionState));
   };
 
-  onError = (onvifDeviceId) => {
-    this.publish(onvifDeviceId, 'disconnected');
+  onError = (onvifDeviceId, err) => {
+    this.publish(onvifDeviceId, 'error', err.code);
   };
   
-  publish = (onvifDeviceId, topicKey) => {
-    this.publishTemplates(onvifDeviceId, topicKey, '', Date.now());
+  publish = (onvifDeviceId, topicKey, state, timest) => {
+    this.publishTemplates(
+      onvifDeviceId,
+      topicKey,
+      state !== undefined ? state : '',
+      timest || Date.now()
+    );
 
     // пока убрал. Не понятно зачем, если строка выше тоже публикует событие по шаблону
     //this.publisher.publish(onvifDeviceId, topicKey, true, Date.now() );
