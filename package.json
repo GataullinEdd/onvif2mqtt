@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha \"test/**/*.test.js\"",
-    "dev": "cross-env CONFIG_PATH=./config.dev.yml nodemon -e js,yml --exec babel-node src/index.js | pino-pretty",
+    "dev": "cross-env CONFIG_PATH=./config.yml nodemon -e js,yml --exec babel-node src/index.js | pino-pretty",
     "build": "babel src --out-dir dist/",
     "start": "node dist/index.js",
     "lint": "eslint ./src/**/*.js"
@@ -24,6 +24,7 @@
     "nodemon": "2.0.2",
     "npm": "6.14.4",
     "onvif": "0.6.2",
+    "ping": "^0.3.0",
     "pino": "5.17.0",
     "pino-pretty": "3.6.1",
     "validate": "5.1.0",
