@@ -24,7 +24,7 @@ export default class Manager {
     await this.publisher.connect();
     this.subscriber = new OnvifSubscriberGroup([], this.onError);
 
-    this.ping = new Ping(this);
+    this.ping = new Ping(this, config.get('ping'));
 
     const configPath = config.get('onvifDevicesJson');
     let devices = []
