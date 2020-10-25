@@ -46,6 +46,7 @@ After acquiring an EzViz DB1 camera doorbell, I was happy to find a PIR sensor o
 
 ## Supported Events
 - Motion Sensor
+- Online host event (Ping)
 - That's it for now, but it's easy to implement new events, just submit a PR or a ticket.
 
 ## Installation
@@ -66,7 +67,7 @@ This method requires an installation of NodeJS / NPM. This is the recommended in
 
 1. Clone this repo
 ```
-git clone https://github.com/dmitrif/onvif2mqtt
+git clone https://github.com/GataullinEdd/onvif2mqtt
 ```
 2. Navigate to the repo folder.
 ```
@@ -95,6 +96,7 @@ CONFIG_FILE=./config.dev.yml npm run start
 ### Notes
 
 Configuration can be placed into a `config.yml` file, containing valid YAML. This file should be placed into the host-mounted config volume; if another location is preferred then the file path can be provided as an environment variable `CONFIG_PATH`.
+Your can use `.yml` or `.json` configuration files
 
 ### MQTT Notes
 
@@ -107,6 +109,7 @@ However, by using the `api.templates` option in configuration, one can define a 
 - `${onvifDeviceId}` - name of the ONVIF device (e.g. `doorbell`)
 - `${eventType}` - type of event captured (e.g. `motion`)
 - `${eventState}` - boolean state of the event (if applicable)
+- `${timestamp}` - timestamp of the event (if applicable)
 
 The messages will be sent to a topic of the following format: `onvif2mqtt/$ONVIF_DEVICE/$SUBTOPIC`.
 
@@ -126,7 +129,8 @@ api:
         { 
           "device": "${onvifDeviceId}", 
           "eventType": "${eventType}", 
-          "state": "${eventState}" 
+          "state": "${eventState}",
+          "timestamp": "${timestamp}"
         }
     # You can specify any number of custom subtopics.
     - subtopic: hello_world
@@ -139,13 +143,60 @@ mqtt:
   username: user
   password: password
 # All of your ONVIF devices
-onvif:
-  # Name for the device (used in MQTT topic)
-  - name: doorbell
-    hostname: localhost
-    port: 80
-    username: admin
-    password: admin
+# File with all devices
+onvifDevicesJson:
+  "config/devices.json"
+#Ping time interval in seconds
+ping:
+  60
+```
+or
+```json
+{
+  "api": {
+    "templates": [
+      {
+        //Subtopics can be nested with `/` and are interpolated
+        "subtopic": "${eventType}/json", 
+
+        // Should this message be retained by MQTT
+        // Defaults to true
+        "retain": false,
+
+        // Template that should be published to the topic, 
+        // values are interpolated
+        "template": { 
+          "device": "${onvifDeviceId}", 
+          "eventType": "${eventType}", 
+          "state": "${eventState}",
+          "timestamp": "${timestamp}"  
+        }
+      }, 
+
+      // You can specify any number of custom subtopics.
+      {
+        "subtopic": "hello_world",
+        "template": "hello from ${onvifDeviceId}"
+      }
+    ]
+  },
+
+  // MQTT Broker configuration, 
+  // required due to nature of project.
+  "mqtt": {
+    "host": "192.168.0.57",
+    "port": 1883,
+    "username": "user",
+    "password": "password"
+  },
+
+  // All of your ONVIF devices
+  // File with all devices
+  "onvifDevicesJson": "config/devices.json",
+
+  // Ping time interval in seconds
+  "ping": 60
+}
 ```
 
 ## Examples / Guides
@@ -181,4 +232,4 @@ binary_sensor doorbell_motion:
 ```
 
 ### Getting  Started
-Simplest way forward is to base your configuration off [`config.sample.yml`](https://github.com/dmitrif/onvif2mqtt/blob/master/config.sample.yml).
+Simplest way forward is to base your configuration off [`config.sample.yml`](https://github.com/GataullinEdd/onvif2mqtt/blob/master/config.sample.yml).
