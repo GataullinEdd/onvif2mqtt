@@ -24,7 +24,12 @@ export default class Manager {
     await this.publisher.connect();
     this.subscriber = new OnvifSubscriberGroup([], this.onError);
 
-    this.ping = new Ping(this, config.get('ping'));
+    this.ping = new Ping({
+      handlers: [
+        this.onPing.bind(this)
+      ], 
+      timeinterval: config.get('ping')
+    });
 
     const configPath = config.get('onvifDevicesJson');
     let devices = []
@@ -136,4 +141,8 @@ export default class Manager {
   onUpdate = onvifDeviceId => {
     this.publish(onvifDeviceId, 'update');
   };
+
+  onPing = (device, result) => {
+    this.publish(device.name, 'online', result.alive, device.stateTS);
+  }
 }
