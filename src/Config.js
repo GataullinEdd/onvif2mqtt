@@ -38,11 +38,21 @@ class Config {
     const configFileRef = fs.readFileSync(CONFIG_PATH, 'utf8');
 
     let parsedConfig = {};
+    let configtype = CONFIG_PATH.split('.').pop();
 
     try {
-      parsedConfig = yaml.parse(configFileRef);
+      switch (configtype) {
+        case 'yml': 
+          parsedConfig = yaml.parse(configFileRef);
+          break;
+        case 'json': 
+          parsedConfig = JSON.parse(configFileRef);
+          break; 
+        default:
+          throw `Invalid config type ${configtype}. Use json or yam.`;
+      }
     } catch(e) {
-      logger.error('Invalid YAML found in configuration', { source: e.source });
+      logger.error(`Invalid ${configtype} found in configuration`, { source: e.source });
       logger.error(e);
       logger.error();
       process.exit(1);

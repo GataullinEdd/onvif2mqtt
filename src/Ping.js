@@ -2,10 +2,11 @@ import logger from './Logger';
 import ping from 'ping';
 
 export default class Ping {
-    constructor(manager) {
+    constructor(manager, timeinterval) {
       this.logger = logger.child({ name: 'Ping' });
       
       this.manager = manager;
+      this.timeinterval = (timeinterval * 1000) || 10000;
       this.devices = [];
       this.init();
     }
@@ -14,7 +15,7 @@ export default class Ping {
         this.logger.info('Ping initialization...');
         setInterval(() => {
             this.pingAll();
-        }, 10000);
+        }, this.timeinterval);
     }
 
     pingAll = () => {
@@ -30,7 +31,7 @@ export default class Ping {
             this.manager.publish(device.name, res.alive ? 'online' : 'offline', res.alive, device.stateTS);
         }
         device.online = res.alive;
-        // this.logger.debug('Ping ', device.name, device.host, device.online, device.stateTS);
+        //this.logger.debug('Ping ', device.name, device.hostname, device.online, device.stateTS);
     }
 
     getDeviceByName = (name) => {
