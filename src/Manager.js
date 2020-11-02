@@ -28,7 +28,7 @@ export default class Manager {
       handlers: [
         this.onPing.bind(this)
       ], 
-      timeinterval: config.get('ping')
+      timeinterval: config.get('timeouts.ping')
     });
 
     const configPath = config.get('onvifDevicesJson');
@@ -51,7 +51,8 @@ export default class Manager {
   initializeOnvifDevices = devices => {
     devices.forEach(async (onvifDevice) => {
       const { name } = onvifDevice;
-      await this.subscriber.addSubscriber(onvifDevice);
+
+      this._addSubscriber(onvifDevice);
       this.ping.add(onvifDevice);
       this.onAdded(name);
     });
@@ -64,10 +65,16 @@ export default class Manager {
       this.subscriber.removeSubscribers(({name}) => {
         return deviceName === name;
       });
-      await this.subscriber.addSubscriber(onvifDevice);
+
+      this._addSubscriber(onvifDevice);
       this.ping.update(onvifDevice);
       this.onUpdate(deviceName);
     });
+  }
+
+  _addSubscriber = async (onvifDevice) => {
+    onvifDevice.reconnect = config.get('timeouts.subscribe');
+    await this.subscriber.addSubscriber(onvifDevice);
   }
 
   finalizeOnvifDevices = devices => {
@@ -109,7 +116,7 @@ export default class Manager {
   onMotionDetected = (onvifDeviceId, boolMotionState, timestamp) => {
     const topicKey = 'motion';
     this.publishTemplates(onvifDeviceId, topicKey, boolMotionState, timestamp);
-    this.publisher.publish(onvifDeviceId, topicKey, convertBooleanToSensorState(boolMotionState));
+    // this.publisher.publish(onvifDeviceId, topicKey, convertBooleanToSensorState(boolMotionState));
   };
 
   onError = (onvifDeviceId, err) => {

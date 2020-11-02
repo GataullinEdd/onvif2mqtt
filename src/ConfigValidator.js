@@ -54,8 +54,9 @@ const configSchema = new Schema({
   onvifDevicesJson: {
     type: String
   },
-  ping: {
-    type: Number
+  timeouts: {
+    ping: Number,
+    subscribe: Number
   }
 });
 
