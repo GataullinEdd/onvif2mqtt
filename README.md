@@ -146,9 +146,11 @@ mqtt:
 # File with all devices
 onvifDevicesJson:
   "config/devices.json"
-#Ping time interval in seconds
-ping:
-  60
+#Ping and Subscribe reconnect time interval in seconds
+timeouts: 
+  ping: 60
+  subscribe: 60
+
 ```
 or
 ```json
@@ -194,8 +196,11 @@ or
   // File with all devices
   "onvifDevicesJson": "config/devices.json",
 
-  // Ping time interval in seconds
-  "ping": 60
+  // Ping and Subscribe reconnect time interval in seconds
+  "timeouts": {
+    "ping": 60,
+    "subscribe": 60
+  }
 }
 ```
 

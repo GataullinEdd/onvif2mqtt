@@ -10,11 +10,13 @@ export default class OnvifSubscriber {
     password,
     port,
     name,
+    reconnect,
   }) {
     this.logger = logger.child({ name: `ONVIF/${name}`, hostname });
 
     this.onEvent = onEvent;
     this.name = name;
+    this.reconnect = reconnect || 10;
     this.onConnect = onConnect;
     this.onCameraEvent = this.onCameraEvent.bind(this);
 
@@ -37,11 +39,25 @@ export default class OnvifSubscriber {
     if (err) {
       this.logger.error(`Failed to connect to ${this.name}`, err);
       this.onEvent(this.name, err);
+      this._reConnectTry();
     } else {
       this.logger.info(`Successfully connected.`);
       this.cam.on('event', this.onCameraEvent); 
     }
   };
+
+  _reConnectTry = () => {
+    if (!this.cam.subTimeout) {
+      this.reconnectTimeout = setTimeout( () => {
+        this.logger.info(`Try reconnect to ${this.name}`);
+        this.reconnectTimeout = undefined;
+        this.cam.connect(this.onSubscribe);
+      }, this.reconnect * 1000);
+    } else {
+      this.logger.debug(`Cam has timeout for reconnec ${this.name}`, this.reconnectTimeout);
+    }
+    
+  }
 
   unsubscribe = () => {
     // todo по хорошему нужно дисконнектится от камеры. Без этого могут быть проблемы
