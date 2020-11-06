@@ -7,6 +7,7 @@ import debounceStateUpdate from "./utils/debounceStateUpdate";
 import interpolateTemplateValues from './utils/interpolateTemplateValues';
 import OnvifDevicesStore from './OnvifDevidesStore';
 import Ping from './Ping';
+import redis from 'redis';
 
 const convertBooleanToSensorState = bool => bool ? 'ON' : 'OFF';
 
@@ -32,14 +33,36 @@ export default class Manager {
     });
 
     const configPath = config.get('onvifDevicesJson');
-    let devices = []
+    let devices = [];
     if (configPath) {
-      devices = await OnvifDevicesStore.init(configPath, this.onConfigUpdated)
+      devices = await OnvifDevicesStore.init(configPath, this.onConfigUpdated);
     } else {
       devices = config.get('onvif');
     }
     this.initializeOnvifDevices(devices);
     this.subscriber.withCallback(CALLBACK_TYPES.motion, this.onMotionDetected); 
+    this.subscriber.withCallback('silence', this.onSilent); 
+
+    // keepalive 
+    this._keepAliveTrigger();
+  };
+
+  _keepAliveTrigger = () => {
+    const timeinterval = config.get('timeouts.ping') || 60;
+    const rclient = redis.createClient(config.get('redis'));
+
+    rclient.on("error", (error) => {
+        this.logger.error('Redis error', error);
+    });
+
+    setInterval(() => {
+      rclient.set('onvif:subscriber:alive', '1', (err) => {
+        if (err) {
+            this.logger.debug('Redis set onvif:subscriber:alive', { err });
+        }
+      });
+      rclient.expire('onvif:subscriber:alive', timeinterval*2); 
+    }, timeinterval);
   };
 
   onConfigUpdated = diff => {
@@ -62,7 +85,7 @@ export default class Manager {
     devices.forEach(async (onvifDevice) => {
       const { name: deviceName } = onvifDevice;
 
-      this.subscriber.removeSubscribers(({name}) => {
+      this.subscriber.removeSubscribers(({ name }) => {
         return deviceName === name;
       });
 
@@ -70,24 +93,24 @@ export default class Manager {
       this.ping.update(onvifDevice);
       this.onUpdate(deviceName);
     });
-  }
+  };
 
   _addSubscriber = async (onvifDevice) => {
     onvifDevice.reconnect = config.get('timeouts.subscribe');
     await this.subscriber.addSubscriber(onvifDevice);
-  }
+  };
 
   finalizeOnvifDevices = devices => {
     devices.forEach(async (onvifDevice) => {
       const { name: deviceName } = onvifDevice;
 
-      this.subscriber.removeSubscribers(({name}) => {
+      this.subscriber.removeSubscribers(({ name }) => {
         return deviceName === name;
       });
       this.ping.remove(onvifDevice);
       this.onRemoved(deviceName);
     });
-  }
+  };
 
   publishTemplates = (onvifDeviceId, eventType, eventState, timestamp) => {
     const templates = config.get('api.templates');
@@ -119,16 +142,30 @@ export default class Manager {
     // this.publisher.publish(onvifDeviceId, topicKey, convertBooleanToSensorState(boolMotionState));
   };
 
+  /* Event Silent Callbacks */
+  onSilent = (onvifDeviceId) => {
+    this.publish(onvifDeviceId, 'silence', true, Date.now() - 3601000);
+  };
+  
+
   onError = (onvifDeviceId, err) => {
     this.publish(onvifDeviceId, 'error', err.code);
   };
   
   publish = (onvifDeviceId, topicKey, state, timest) => {
+    const MS_IN_HOUR = 3600000;
+    timest = timest || Date.now();
+
+    // если время события отличается от текущего больше чем на час, посылаем события рассинхрона
+    if (Math.abs(timest - Date.now()) > MS_IN_HOUR) {
+      this.publishTemplates(onvifDeviceId, 'desynchronization', timest, Date.now());
+    }
+
     this.publishTemplates(
       onvifDeviceId,
       topicKey,
       state !== undefined ? state : '',
-      timest || Date.now()
+      timest
     );
 
     // пока убрал. Не понятно зачем, если строка выше тоже публикует событие по шаблону
@@ -151,5 +188,5 @@ export default class Manager {
 
   onPing = (device, result) => {
     this.publish(device.name, 'online', result.alive, device.stateTS);
-  }
+  };
 }
