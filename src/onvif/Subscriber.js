@@ -54,13 +54,13 @@ export default class OnvifSubscriber {
         this.cam.connect(this.onSubscribe);
       }, this.reconnect * 1000);
     } else {
-      this.logger.debug(`Cam has timeout for reconnec ${this.name}`, this.reconnectTimeout);
+      this.logger.debug(`Cam has timeout for reconnect ${this.name}`, this.reconnectTimeout);
     }
     
-  }
+  };
 
   unsubscribe = () => {
     // todo по хорошему нужно дисконнектится от камеры. Без этого могут быть проблемы
     this.cam.removeListener('event', this.onCameraEvent);
-  }
+  };
 }

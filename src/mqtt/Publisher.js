@@ -1,8 +1,6 @@
 import MQTT from 'async-mqtt';
 import logger from '../Logger';
 
-const HOMEASSISTANT_PREFIX = 'homeassistant/';
-
 const DEFAULT_OPTIONS = {
 };
 
