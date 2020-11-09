@@ -69,7 +69,7 @@ class Validator {
     return configSchema.validate(
       config
     );
-  }
+  };
 }
 
 export default new Validator();

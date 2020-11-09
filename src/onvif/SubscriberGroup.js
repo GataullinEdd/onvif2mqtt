@@ -6,7 +6,8 @@ const NO_OP = () => {};
 const NAMESPACE_DELIMITER = ':';
 
 export const CALLBACK_TYPES = {
-  motion: 'onMotionDetected'
+  motion: 'onMotionDetected',
+  silence: 'onSilence'
 };
 
 const EVENTS = {
@@ -52,18 +53,26 @@ export default class SubscriberGroup {
     this._addSilentTimer(subscriberConfig.name);
   };
 
+  _sendSilence = (name) => {
+    {
+      this.logger.trace(`ONVIF no events on ${name}`);
+      this.callbacks[CALLBACK_TYPES.silence](name);
+    }
+  };
+
   _addSilentTimer = (name) => {
     const DAY_IN_MS = 86400000;
     this._removeSilentTimer(name);
-    this.silentTimers[name] = setInterval(() => {
-      this.logger.trace(`ONVIF no events on ${name} at ${DAY_IN_MS}`);
-      this.callbacks['silence'](name);
-    }, DAY_IN_MS);
+
+    this.silentTimers[name] = setInterval(
+      this._sendSilence.bind(this, name)
+      , DAY_IN_MS
+    );
   };
 
   _removeSilentTimer = (name) => {
     if (this.silentTimers[name]) {
-      clearInterval(silentTimers[name]);
+      clearInterval(this.silentTimers[name]);
       delete this.silentTimers[name];
     }
   };
@@ -94,12 +103,14 @@ export default class SubscriberGroup {
       const timestamp = utcTime.getTime();
       const eventValue = event.message.message.data.simpleItem.$.Value;
 
+      this.logger.trace('ONVIF received', { subscriberName, eventType, eventValue });
+      this.callbacks[callbackType](subscriberName, eventValue, timestamp);
+
+      /*
       if (callbackType) {
         this._addSilentTimer(subscriberName);
       }
-
-      this.logger.trace('ONVIF received', { subscriberName, eventType, eventValue });
-      this.callbacks[callbackType](subscriberName, eventValue, timestamp);
+      */
     }
   };
 }
