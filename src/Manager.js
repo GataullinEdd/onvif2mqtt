@@ -41,7 +41,7 @@ export default class Manager {
     }
     this.initializeOnvifDevices(devices);
     this.subscriber.withCallback(CALLBACK_TYPES.motion, this.onMotionDetected); 
-    this.subscriber.withCallback('silence', this.onSilent); 
+    this.subscriber.withCallback(CALLBACK_TYPES.silence, this.onSilent); 
 
     // keepalive 
     this._keepAliveTrigger();
@@ -144,7 +144,7 @@ export default class Manager {
 
   /* Event Silent Callbacks */
   onSilent = (onvifDeviceId) => {
-    this.publish(onvifDeviceId, 'silence', true, Date.now() - 3601000);
+    this.publish(onvifDeviceId, 'silence', true, Date.now());
   };
   
 

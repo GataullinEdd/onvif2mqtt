@@ -19,7 +19,7 @@ export default class MqttPublisher {
 
     this.client = await MQTT.connectAsync(this.options);
 
-    this.logger.info('Successfully connected.');
+    this.logger.info('Successfully connected MQTT.');
   };
 
   publish = async (onvifId, event, value, retain = true) => {

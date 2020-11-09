@@ -41,7 +41,7 @@ export default class OnvifSubscriber {
       this.onEvent(this.name, err);
       this._reConnectTry();
     } else {
-      this.logger.info(`Successfully connected.`);
+      this.logger.info(`Successfully connected ONVIF.`);
       this.cam.on('event', this.onCameraEvent); 
     }
   };
