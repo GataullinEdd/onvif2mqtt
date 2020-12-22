@@ -14,7 +14,7 @@ const convertBooleanToSensorState = bool => bool ? 'ON' : 'OFF';
 export default class Manager {
   constructor() {
     this.logger = logger.child({ name: 'Manager' });
-    
+
     this.init();
   }
 
@@ -28,7 +28,7 @@ export default class Manager {
     this.ping = new Ping({
       handlers: [
         this.onPing.bind(this)
-      ], 
+      ],
       timeinterval: config.get('timeouts.ping')
     });
 
@@ -40,10 +40,10 @@ export default class Manager {
       devices = config.get('onvif');
     }
     this.initializeOnvifDevices(devices);
-    this.subscriber.withCallback(CALLBACK_TYPES.motion, this.onMotionDetected); 
-    this.subscriber.withCallback(CALLBACK_TYPES.silence, this.onSilent); 
+    this.subscriber.withCallback(CALLBACK_TYPES.motion, this.onMotionDetected);
+    this.subscriber.withCallback(CALLBACK_TYPES.silence, this.onSilent);
 
-    // keepalive 
+    // keepalive
     this._keepAliveTrigger();
   };
 
@@ -61,7 +61,7 @@ export default class Manager {
             this.logger.debug('Redis set onvif:subscriber:alive', { err });
         }
       });
-      rclient.expire('onvif:subscriber:alive', timeinterval*2); 
+      rclient.expire('onvif:subscriber:alive', timeinterval*2);
     }, timeinterval);
   };
 
@@ -125,7 +125,7 @@ export default class Manager {
       const interpolationValues = {
         onvifDeviceId,
         eventType,
-        eventState, 
+        eventState,
         timestamp
       };
       const interpolatedSubtopic = interpolateTemplateValues(subtopic, interpolationValues);
@@ -134,7 +134,7 @@ export default class Manager {
       this.publisher.publish(onvifDeviceId, interpolatedSubtopic, interpolatedTemplate, retain);
     });
   };
-  
+
   /* Event Callbacks */
   onMotionDetected = (onvifDeviceId, boolMotionState, timestamp) => {
     const topicKey = 'motion';
@@ -146,12 +146,12 @@ export default class Manager {
   onSilent = (onvifDeviceId) => {
     this.publish(onvifDeviceId, 'silence', true, Date.now());
   };
-  
+
 
   onError = (onvifDeviceId, err) => {
     this.publish(onvifDeviceId, 'error', err.code);
   };
-  
+
   publish = (onvifDeviceId, topicKey, state, timest) => {
     const MS_IN_HOUR = 3600000;
     timest = timest || Date.now();
@@ -186,7 +186,7 @@ export default class Manager {
     this.publish(onvifDeviceId, 'update');
   };
 
-  onPing = (device, result) => {
-    this.publish(device.name, 'online', result.alive, device.stateTS);
+  onPing = (device, is_alive) => {
+    this.publish(device.name, 'online', is_alive, device.stateTS);
   };
 }

@@ -2,8 +2,8 @@ import { Cam } from 'onvif';
 import logger from '../Logger';
 
 export default class OnvifSubscriber {
-  constructor({ 
-    onEvent, 
+  constructor({
+    onEvent,
     onConnect,
     hostname,
     username,
@@ -41,8 +41,8 @@ export default class OnvifSubscriber {
       this.onEvent(this.name, err);
       this._reConnectTry();
     } else {
+      this.cam.on('event', this.onCameraEvent);
       this.logger.info(`Successfully connected ONVIF.`);
-      this.cam.on('event', this.onCameraEvent); 
     }
   };
 
@@ -56,7 +56,7 @@ export default class OnvifSubscriber {
     } else {
       this.logger.debug(`Cam has timeout for reconnect ${this.name}`, this.reconnectTimeout);
     }
-    
+
   };
 
   unsubscribe = () => {

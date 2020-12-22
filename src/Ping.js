@@ -1,5 +1,7 @@
 import logger from './Logger';
 import ping from 'ping';
+import { exec } from 'child_process'
+
 
 export default class Ping {
     /**
@@ -7,11 +9,11 @@ export default class Ping {
      * @param {
      *    handlers: Collback functions list. Arguments - device and result of ping
      *    timeinterval: Number. Seconds for ping interval
-     * } options 
+     * } options
      */
     constructor(options) {
       this.logger = logger.child({ name: 'Ping' });
-      
+
       this.handlers = options.handlers;
       this.timeinterval = (options.timeinterval * 1000) || 10000;
 
@@ -31,35 +33,59 @@ export default class Ping {
      */
     pingAll = () => {
         this.devices.forEach( (device) => {
-            this.ping(device);
+            this.pingCmd(device);
         });
+    };
+
+    pingCmd = (device) => {
+        if (device.stream_url) {
+            exec(`curl --head --connect-timeout 2 -i -X OPTIONS "${device.stream_url}"`,
+                {shell: true, encoding: 'utf8'},
+                (error, stdout, stderr) => {
+                    if (stdout && stdout.includes('RTSP/1.0 200 OK')) {
+                        // this.logger.info('Ping curl ', device.name, device.stream_url, stdout);
+                        this.setDeviceAlive(device, true);
+                    } else {
+                        if (device.online) {
+                            this.logger.error('Ping curl error ', device.name, device.stream_url, error, stdout, stderr);
+                        }
+                        this.setDeviceAlive(device, false);
+                    }
+            });
+        } else {
+            this.ping(device)
+        }
     };
 
     /**
      * Ping device
-     * @param {*} device 
+     * @param {*} device
      */
     ping = async (device) => {
         let res = await ping.promise.probe(device.hostname);
-        if (device.online !== res.alive) {
-            device.stateTS = Date.now();
-            this.handlers.forEach((fn) => fn(device, res));
-        }
-        device.online = res.alive;
+        this.setDeviceAlive(device, res.alive);
         // this.logger.debug('Ping ', device.name, device.hostname, device.online, device.stateTS);
+    };
+
+    setDeviceAlive = (device, is_alive) => {
+        if (device.online !== is_alive) {
+            device.stateTS = Date.now();
+            this.handlers.forEach((fn) => fn(device, is_alive));
+        }
+        device.online = is_alive;
     };
 
     /**
      * Get device object by name
-     * @param {String} name 
+     * @param {String} name
      */
     getDeviceByName = (name) => {
         return this.devices.find( (device) => device.name === name ) || {};
     };
-  
+
     /**
      * Update device params
-     * @param {*} device 
+     * @param {*} device
      */
     update = (device) => {
         let old = this.getDeviceByName(device.name);
@@ -69,13 +95,13 @@ export default class Ping {
 
     /**
      * Add new device for ping
-     * @param {*} device 
+     * @param {*} device
      */
     add = (device) => {
         this.devices.push({
             online: true,
             stateTS: Date.now(),
-            ...device 
+            ...device
         });
         this.ping(this.devices[this.devices.length - 1]);
         this.logger.debug('Ping add', device.name, device.hostname);
@@ -83,7 +109,7 @@ export default class Ping {
 
     /**
      * Remove device by name from device list
-     * @param {*} device 
+     * @param {*} device
      */
     remove = (device) => {
         this.devices = this.devices.filter( (dev) => dev.name !== device.name );

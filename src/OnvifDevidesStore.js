@@ -22,14 +22,15 @@ const schema = new Schema({
       match: /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
     },
     port: {
-      type: Number, 
+      type: Number,
       required: true,
     },
     username: String,
     password: String,
+    stream_url: String
   });
 
-export default class OnvifDevidesStore { 
+export default class OnvifDevidesStore {
     static async init (fileName, onUpdated) {
         devices = await OnvifDevidesStore._readConfig(fileName);
         OnvifDevidesStore._runWatcher(fileName, onUpdated);
@@ -47,7 +48,7 @@ export default class OnvifDevidesStore {
           onUpdated(diff);
         });
     }
-    
+
     static async _readConfig (configPath) {
         try {
             const json = await readFile(path.resolve(configPath), 'utf8');
@@ -66,7 +67,7 @@ export default class OnvifDevidesStore {
         const errors =  schema.validate(
           config
         );
-    
+
         if (errors.length) {
             logger.error(`Config onvif device with index=${index} validation failed...`);
             errors.forEach(({ path, message }) => {
