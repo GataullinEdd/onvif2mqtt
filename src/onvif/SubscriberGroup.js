@@ -15,7 +15,7 @@ const EVENTS = {
 };
 
 const DEFAULT_CALLBACKS = {
-  [CALLBACK_TYPES.motion]: NO_OP, 
+  [CALLBACK_TYPES.motion]: NO_OP,
 };
 
 export default class SubscriberGroup {
@@ -50,7 +50,7 @@ export default class SubscriberGroup {
       onEvent: this.onSubscriberEvent
     }));
 
-    this._addSilentTimer(subscriberConfig.name);
+    // this._addSilentTimer(subscriberConfig.name);
   };
 
   _sendSilence = (name) => {
@@ -81,8 +81,8 @@ export default class SubscriberGroup {
   removeSubscribers = (predicate) => {
     const targets = this.subscribers.filter(predicate);
     targets.forEach((subscriber) => {
-      subscriber.unsubscribe();
-      this._removeSilentTimer(subscriber.name);
+      subscriber.destroy();
+      // this._removeSilentTimer(subscriber.name);
     });
 
     this.subscribers = this.subscribers.filter((subscriber) => {
@@ -95,7 +95,7 @@ export default class SubscriberGroup {
       this.logger.trace('ONVIF received failed', { subscriberName });
       //this.logger.debug('ONVIF error', { error });
       this.errorCallBack(subscriberName, error);
-    } else {   
+    } else {
       //this.logger.debug('ONVIF event', { event });
       const [namespace, eventType] = event.topic._.split(NAMESPACE_DELIMITER);
       const callbackType = EVENTS[eventType];

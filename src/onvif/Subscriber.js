@@ -29,6 +29,8 @@ export default class OnvifSubscriber {
       port,
       preserveAddress: true
     }, this.onSubscribe);
+
+    this.logger.info(`Attempting create cam: ${this.cam.hostname}:${this.cam.port}`);
   }
 
   onCameraEvent = camMessage => {
@@ -37,12 +39,12 @@ export default class OnvifSubscriber {
 
   onSubscribe = (err) => {
     if (err) {
-      this.logger.error(`Failed to connect to ${this.name}`, err);
+      this.logger.error(`Failed to connect to ${this.name} ${this.cam.hostname}:${this.cam.port}`, err);
       this.onEvent(this.name, err);
       this._reConnectTry();
     } else {
       this.cam.on('event', this.onCameraEvent);
-      this.logger.info(`Successfully connected ONVIF.`);
+      this.logger.info(`Successfully connected ONVIF ${this.name} on ${this.cam.hostname}:${this.cam.port}`);
     }
   };
 
@@ -56,11 +58,23 @@ export default class OnvifSubscriber {
     } else {
       this.logger.debug(`Cam has timeout for reconnect ${this.name}`, this.reconnectTimeout);
     }
-
   };
 
   unsubscribe = () => {
     // todo по хорошему нужно дисконнектится от камеры. Без этого могут быть проблемы
+    this.logger.info(`Unsubscribe ${this.cam.hostname}:${this.cam.port}`);
     this.cam.removeListener('event', this.onCameraEvent);
+  };
+
+  destroy = () => {
+      this.unsubscribe();
+      if (this.reconnectTimeout) {
+         clearTimeout(this.reconnectTimeout)
+      }
+      this.onEvent = undefined;
+      this.onConnect = undefined;
+      this.onCameraEvent = undefined;
+      this.logger = undefined;
+      delete this.cam;
   };
 }
