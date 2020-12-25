@@ -43,7 +43,9 @@ export default class OnvifSubscriber {
       this.onEvent(this.name, err);
       this._reConnectTry();
     } else {
-      this.cam.on('event', this.onCameraEvent);
+      this.unsubscribe();
+      this.subscribe();
+
       this.logger.info(`Successfully connected ONVIF ${this.name} on ${this.cam.hostname}:${this.cam.port}`);
     }
   };
@@ -60,10 +62,24 @@ export default class OnvifSubscriber {
     }
   };
 
+   subscribe = () => {
+      if (this.handler) {
+         this.unsubscribe();
+      }
+
+      this.handler = this.onCameraEvent.bind(this)
+
+      this.logger.info(`Subscribe ${this.cam.hostname}:${this.cam.port}`);
+      this.cam.on('event', this.handler);
+   };
+
   unsubscribe = () => {
     // todo по хорошему нужно дисконнектится от камеры. Без этого могут быть проблемы
-    this.logger.info(`Unsubscribe ${this.cam.hostname}:${this.cam.port}`);
-    this.cam.removeListener('event', this.onCameraEvent);
+    if (this.handler) {
+      this.logger.info(`Unsubscribe ${this.cam.hostname}:${this.cam.port}`);
+      this.cam.removeListener('event', this.handler);
+      this.handler = undefined;
+    }
   };
 
   destroy = () => {

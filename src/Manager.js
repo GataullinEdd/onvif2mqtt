@@ -41,7 +41,7 @@ export default class Manager {
     }
     this.initializeOnvifDevices(devices);
     this.subscriber.withCallback(CALLBACK_TYPES.motion, this.onMotionDetected);
-    this.subscriber.withCallback(CALLBACK_TYPES.silence, this.onSilent);
+    // this.subscriber.withCallback(CALLBACK_TYPES.silence, this.onSilent);
 
     // keepalive
     this._keepAliveTrigger();

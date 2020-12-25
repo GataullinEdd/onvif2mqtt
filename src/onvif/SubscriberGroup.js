@@ -96,7 +96,7 @@ export default class SubscriberGroup {
       //this.logger.debug('ONVIF error', { error });
       this.errorCallBack(subscriberName, error);
     } else {
-      //this.logger.debug('ONVIF event', { event });
+      // this.logger.debug('ONVIF event',{ subscriberName }, { event });
       const [namespace, eventType] = event.topic._.split(NAMESPACE_DELIMITER);
       const callbackType = EVENTS[eventType];
       const utcTime = event.message.message.$.UtcTime;
