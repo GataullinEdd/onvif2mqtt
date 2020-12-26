@@ -8,7 +8,7 @@ import merge from 'merge-deep';
 import logger, { setLoggingLevel } from './Logger';
 
 const DEFAULT_CONFIG_PATH = path.resolve(__dirname, '../default-config.yml');
-const CONFIG_PATH = process.env.CONFIG_PATH || '/config/config.yml';
+const CONFIG_PATH = process.env.CONFIG_PATH || '/config/config.json';
 
 class Config {
   static instance;
@@ -42,12 +42,12 @@ class Config {
 
     try {
       switch (configtype) {
-        case 'yml': 
+        case 'yml':
           parsedConfig = yaml.parse(configFileRef);
           break;
-        case 'json': 
+        case 'json':
           parsedConfig = JSON.parse(configFileRef);
-          break; 
+          break;
         default:
           throw `Invalid config type ${configtype}. Use json or yam.`;
       }

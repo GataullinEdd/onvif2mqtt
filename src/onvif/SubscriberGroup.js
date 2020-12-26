@@ -45,10 +45,12 @@ export default class SubscriberGroup {
   };
 
   addSubscriber = (subscriberConfig) => {
-    this.subscribers.push(new Subscriber({
-      ...subscriberConfig,
-      onEvent: this.onSubscriberEvent
-    }));
+      let subscr = new Subscriber({
+         ...subscriberConfig,
+         onEvent: this.onSubscriberEvent
+      })
+      this.subscribers.push(subscr);
+      return subscr
 
     // this._addSilentTimer(subscriberConfig.name);
   };

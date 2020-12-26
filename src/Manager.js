@@ -95,9 +95,9 @@ export default class Manager {
     });
   };
 
-  _addSubscriber = async (onvifDevice) => {
+  _addSubscriber = (onvifDevice) => {
     onvifDevice.reconnect = config.get('timeouts.subscribe');
-    await this.subscriber.addSubscriber(onvifDevice);
+    return this.subscriber.addSubscriber(onvifDevice);
   };
 
   finalizeOnvifDevices = devices => {
