@@ -11,7 +11,8 @@ export const CALLBACK_TYPES = {
 };
 
 const EVENTS = {
-  'RuleEngine/CellMotionDetector/Motion': CALLBACK_TYPES.motion
+  'RuleEngine/CellMotionDetector/Motion': CALLBACK_TYPES.motion,
+  'RuleEngine/CellMotionDetector/Motion//.': CALLBACK_TYPES.motion
 };
 
 const DEFAULT_CALLBACKS = {
@@ -92,18 +93,28 @@ export default class SubscriberGroup {
     });
   };
 
+  _simpleItemsToObject = (items) => {
+    return items.reduce((out, item) => { out[item.$.Name] = item.$.Value; return out; }, {});
+  };
+
   onSubscriberEvent = (subscriberName, error, event) => {
     if (error) {
       this.logger.trace('ONVIF received failed', { subscriberName });
       //this.logger.debug('ONVIF error', { error });
       this.errorCallBack(subscriberName, error);
     } else {
-      // this.logger.debug('ONVIF event',{ subscriberName }, { event });
       const [namespace, eventType] = event.topic._.split(NAMESPACE_DELIMITER);
+
       const callbackType = EVENTS[eventType];
-      const utcTime = event.message.message.$.UtcTime;
+      let utcTime = event.message.message.$.UtcTime;
+
+      if (!(utcTime instanceof Date)) {
+         utcTime = new Date(utcTime+'.000Z');
+      }
+
       const timestamp = utcTime.getTime();
-      const eventValue = event.message.message.data.simpleItem.$.Value;
+      const simpleItem = event.message.message.data.simpleItem;
+      const eventValue = this._simpleItemsToObject(simpleItem instanceof(Array) ? simpleItem : [simpleItem]);
 
       this.logger.trace('ONVIF received', { subscriberName, eventType, eventValue });
       this.callbacks[callbackType](subscriberName, eventValue, timestamp);

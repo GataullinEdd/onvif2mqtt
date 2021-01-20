@@ -136,8 +136,11 @@ export default class Manager {
   };
 
   /* Event Callbacks */
-  onMotionDetected = (onvifDeviceId, boolMotionState, timestamp) => {
+  onMotionDetected = (onvifDeviceId, motionState, timestamp) => {
     const topicKey = 'motion';
+
+    const boolMotionState = motionState.IsMotion;
+
     this.publishTemplates(onvifDeviceId, topicKey, boolMotionState, timestamp);
     // this.publisher.publish(onvifDeviceId, topicKey, convertBooleanToSensorState(boolMotionState));
   };

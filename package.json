@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha \"test/**/*.test.js\"",
-    "dev": "cross-env CONFIG_PATH=./config.json nodemon -e js,json --exec babel-node src/index.js | pino-pretty",
-    "pre-test": "cross-env CONFIG_PATH=./config.json nodemon -e js --exec babel-node src/index.js | pino-pretty",
+    "dev": "cross-env CONFIG_PATH=./config.json nodemon -e js,json --exec babel-node src/index.js | pino-pretty -t",
+    "pre-test": "cross-env CONFIG_PATH=./config.json nodemon -e js --exec babel-node src/index.js | pino-pretty -t",
     "build": "babel src --out-dir dist/",
-    "start": "cross-env CONFIG_PATH=/config/config.json node dist/index.js | pino-pretty",
+    "start": "cross-env CONFIG_PATH=/config/config.json node dist/index.js | pino-pretty -t",
     "lint": "eslint ./src/**/*.js"
   },
   "author": "Dmitri Farkov",
