@@ -5,6 +5,8 @@ const NO_OP = () => {};
 
 const NAMESPACE_DELIMITER = ':';
 
+const SILENCE_TIMEOUT = 86400000;
+
 export const CALLBACK_TYPES = {
   motion: 'onMotionDetected',
   silence: 'onSilence'
@@ -51,9 +53,9 @@ export default class SubscriberGroup {
          onEvent: this.onSubscriberEvent
       })
       this.subscribers.push(subscr);
-      return subscr
+      this._addSilentTimer(subscriberConfig.name);
 
-    // this._addSilentTimer(subscriberConfig.name);
+      return subscr
   };
 
   _sendSilence = (name) => {
@@ -64,12 +66,11 @@ export default class SubscriberGroup {
   };
 
   _addSilentTimer = (name) => {
-    const DAY_IN_MS = 86400000;
     this._removeSilentTimer(name);
 
     this.silentTimers[name] = setInterval(
       this._sendSilence.bind(this, name)
-      , DAY_IN_MS
+      , SILENCE_TIMEOUT
     );
   };
 
@@ -85,7 +86,7 @@ export default class SubscriberGroup {
     const targets = this.subscribers.filter(predicate);
     targets.forEach((subscriber) => {
       subscriber.destroy();
-      // this._removeSilentTimer(subscriber.name);
+      this._removeSilentTimer(subscriber.name);
     });
 
     this.subscribers = this.subscribers.filter((subscriber) => {
@@ -97,33 +98,43 @@ export default class SubscriberGroup {
     return items.reduce((out, item) => { out[item.$.Name] = item.$.Value; return out; }, {});
   };
 
+  _getEventTimestamp = (utcTime) => {
+    let utcTimeDate = utcTime;
+    if (!(utcTime instanceof Date)) {
+       try {
+         utcTimeDate = new Date(utcTime+'.000Z');
+       } catch (error) {
+         utcTimeDate = new Date();
+         this.logger.error('getEventTimestamp ', { utcTime });
+       }
+    }
+
+    return utcTimeDate.getTime();
+  };
+
   onSubscriberEvent = (subscriberName, error, event) => {
     if (error) {
       this.logger.trace('ONVIF received failed', { subscriberName });
-      //this.logger.debug('ONVIF error', { error });
       this.errorCallBack(subscriberName, error);
     } else {
       const [namespace, eventType] = event.topic._.split(NAMESPACE_DELIMITER);
-
       const callbackType = EVENTS[eventType];
-      let utcTime = event.message.message.$.UtcTime;
-
-      if (!(utcTime instanceof Date)) {
-         utcTime = new Date(utcTime+'.000Z');
+      if (callbackType) {
+         // если есть callbackType, но нет дальше отправки события, то что-то не то обработчиках
+         // для отлова проблем и ошибок
+         this.logger.debug('Wait for publish eventtype', { subscriberName, eventType });
       }
 
-      const timestamp = utcTime.getTime();
+      const timestamp = this._getEventTimestamp(event.message.message.$.UtcTime);
       const simpleItem = event.message.message.data.simpleItem;
       const eventValue = this._simpleItemsToObject(simpleItem instanceof(Array) ? simpleItem : [simpleItem]);
 
       this.logger.trace('ONVIF received', { subscriberName, eventType, eventValue });
       this.callbacks[callbackType](subscriberName, eventValue, timestamp);
 
-      /*
       if (callbackType) {
         this._addSilentTimer(subscriberName);
       }
-      */
     }
   };
 }
