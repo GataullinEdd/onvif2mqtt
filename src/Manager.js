@@ -139,7 +139,7 @@ export default class Manager {
   onMotionDetected = (onvifDeviceId, motionState, timestamp) => {
     const topicKey = 'motion';
 
-    const boolMotionState = motionState.IsMotion;
+    const boolMotionState = motionState.IsMotion !== undefined ? motionState.IsMotion : motionState.State;
 
     this.publishTemplates(onvifDeviceId, topicKey, boolMotionState, timestamp);
     // this.publisher.publish(onvifDeviceId, topicKey, convertBooleanToSensorState(boolMotionState));
