@@ -47,9 +47,15 @@ export default class Ping {
                         this.setDeviceAlive(device, true);
                     } else {
                         if (device.online) {
-                            this.logger.error('Ping curl error ', device.name, device.stream_url, error, stdout, stderr);
+                           this.logger.error('Ping curl error ', device.name, device.stream_url, error);
                         }
-                        this.setDeviceAlive(device, false);
+                        // Бывают случаи, что в ответ приходит результат работы процесса
+                        // При переполнении буфера, процесс прибивается и приходит что-то такое
+                        //      {"killed":false,"code":null,"signal":"SIGKILL"....
+                        // если ошибка, но ошибка не с exec процессом, то значит пинг не прошел
+                        if (error && error.code && !error.signal) {
+                           this.setDeviceAlive(device, false);
+                        }
                     }
             });
         } else {
