@@ -40,7 +40,6 @@ export default class OnvifSubscriber {
   };
 
   onSubscribe = (err) => {
-    this.subscribed = true;
     if (err) {
       this.logger.error(`Failed to connect to ${this.name} ${this.cam.hostname}:${this.cam.port}`, err);
       this.onEvent(this.name, err);
@@ -84,6 +83,7 @@ export default class OnvifSubscriber {
             if (!err) {
                this.logger.info(`CreatePullPointSubscription ${this.cam.hostname}:${this.cam.port}`);
                this.cam.on('event', this.handler);
+               this.subscribed = true;
             } else {
                this.logger.error(`CreatePullPointSubscription ${this.cam.hostname}:${this.cam.port}`);
                this._createPullPointSubscription();

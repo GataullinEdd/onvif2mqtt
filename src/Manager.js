@@ -25,6 +25,23 @@ export default class Manager {
     await this.publisher.connect();
     this.subscriber = new OnvifSubscriberGroup([], this.onError);
 
+    // инфа по составу камер для статистики и триггеров
+    // "cameras:onvif:success - количество подключенных по onvif
+    // cameras:onvif:failed - количество не подключенных
+    // cameras:online - количество онлайн камер (у которых статус положительный)
+    // cameras:offline - количество оффлайн (которые не але по пингу) если это вообще сохраняется где-то
+    // cameras:total - общее число камер из конфига"
+    this.info = {
+         onvif: {
+            total: 0,
+            success: 0,
+            failed: 0
+         },
+         online: 0,
+         offline: 0,
+         total: 0
+    };
+
     this.ping = new Ping({
       handlers: [
         this.onPing.bind(this)
@@ -39,6 +56,9 @@ export default class Manager {
     } else {
       devices = config.get('onvif');
     }
+
+    this.info.total = devices.length;
+
     this.initializeOnvifDevices(devices);
     this.subscriber.withCallback(CALLBACK_TYPES.motion, this.onMotionDetected);
     this.subscriber.withCallback(CALLBACK_TYPES.silence, this.onSilent);
@@ -56,19 +76,53 @@ export default class Manager {
     });
 
     setInterval(() => {
+      this._checkInfo();
+      // this.logger.info('Info cameras', this.info);
+
       rclient.set('onvif:subscriber:alive', '1', (err) => {
         if (err) {
             this.logger.debug('Redis set onvif:subscriber:alive', { err });
         }
       });
       rclient.expire('onvif:subscriber:alive', timeinterval*2);
-    }, timeinterval);
+
+      rclient.set('cameras:total', this.info.total.toString());
+      rclient.set('cameras:onvif:total', this.info.onvif.total.toString());
+      rclient.set('cameras:onvif:success', this.info.onvif.success.toString());
+      rclient.set('cameras:onvif:failed', this.info.onvif.failed.toString());
+      rclient.set('cameras:online', this.info.online.toString());
+      rclient.set('cameras:offline', this.info.offline.toString());
+
+    }, timeinterval*1000);
+  };
+
+  _checkInfo = () => {
+      this.info.onvif.success = 0;
+      this.info.online = 0;
+      this.info.offline = 0;
+
+      this.info.onvif.total = this.subscriber.subscribers.length;
+      this.subscriber.subscribers.forEach((sub) => {
+         if (sub.subscribed) {
+            this.info.onvif.success += 1;
+         }
+
+         if (sub.online) {
+            this.info.online += 1;
+         } else {
+            this.info.offline += 1;
+         }
+      });
+
+      this.info.onvif.failed = this.info.onvif.total - this.info.onvif.success;
   };
 
   onConfigUpdated = diff => {
     this.finalizeOnvifDevices(diff.removed);
     this.initializeOnvifDevices(diff.added);
     this.updateOnvifDevice(diff.updated);
+
+    this.info.total = (diff.added || []).length + (diff.updated || []).length;
   };
 
   initializeOnvifDevices = devices => {
